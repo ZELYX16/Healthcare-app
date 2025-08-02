@@ -3,10 +3,11 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { auth } from "../config/firebase";
+import { auth, googleProvider } from "../config/firebase";
 
 const AuthContext = createContext();
 
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Sign up function
+  // Sign up with email/password
   const signup = async (email, password, displayName) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     if (displayName) {
@@ -31,9 +32,14 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
-  // Login function
+  // Login with email/password
   const login = (email, password) => {
     return signInWithEmailAndPassword(auth, email, password);
+  };
+
+  // Google Sign-in/Sign-up
+  const signInWithGoogle = () => {
+    return signInWithPopup(auth, googleProvider);
   };
 
   // Logout function
@@ -54,6 +60,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     signup,
     login,
+    signInWithGoogle,
     logout,
     loading,
   };
