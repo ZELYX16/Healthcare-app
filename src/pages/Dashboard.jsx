@@ -35,9 +35,7 @@ const Dashboard = () => {
   const handleProfileClick = () => {
     navigate("/profile");
   };
-  if (!userData) {
-    return <div>Loading...</div>;
-  }
+  
   
     return (
       <div

@@ -28,11 +28,11 @@ export const createUserDocument = async (user, additionalData = {}) => {
         height: null,
         weight: null,
         age: null,
-        targetFbs: 100,
-        targetPpbs: 140,
+        currentFbs: 100,
+        currentPpbs: 140,
         dailyCalories: 1800,
-        initialBloodSugar: null,
-        ...additionalData
+        currentCalories:0,
+        ...additionalData,
       });
 
       // Create corresponding leaderboard entry
