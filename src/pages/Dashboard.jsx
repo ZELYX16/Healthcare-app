@@ -28,6 +28,10 @@ const Dashboard = () => {
     }
   };
 
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
+
   return (
     <div
       style={{
@@ -54,20 +58,36 @@ const Dashboard = () => {
             Hello, {currentUser?.displayName || currentUser?.email}!
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          style={{
-            background: "#ef4444",
-            color: "white",
-            border: "none",
-            padding: "0.5rem 1rem",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontSize: "0.875rem",
-            fontWeight: "500",
-          }}>
-          Logout
-        </button>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button
+            onClick={handleProfileClick}
+            style={{
+              background: "#4f46e5",
+              color: "white",
+              border: "none",
+              padding: "0.5rem 1rem",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+            }}>
+            Profile
+          </button>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "#ef4444",
+              color: "white",
+              border: "none",
+              padding: "0.5rem 1rem",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: "500",
+            }}>
+            Logout
+          </button>
+        </div>
       </header>
 
       <div

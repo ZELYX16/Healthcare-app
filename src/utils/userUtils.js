@@ -16,6 +16,7 @@ export const createUserDocument = async (user, additionalData = {}) => {
         displayName,
         email,
         createdAt,
+		hasProfile: false,
         ...additionalData
       });
       console.log('User document created successfully');
@@ -56,6 +57,7 @@ export const updateUserProfile = async (uid, profileData) => {
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
       ...profileData,
+	  hasProfile: true,
       updatedAt: new Date().toISOString()
     }, { merge: true });
     return true;
