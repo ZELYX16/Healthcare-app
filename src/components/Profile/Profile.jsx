@@ -14,19 +14,21 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(null);
 
   const [formData, setFormData] = useState({
-    fullName: currentUser?.displayName || '',
-    phoneNumber: '',
-    address: '',
-    dateOfBirth: '',
-    gender: '',
-    diabeticType: '',
-    currentHba1cLevel: '',
-    fastingBloodSugar: '',
-    preferredFoodType: '',
-    age: '',
-    height: '',
-    weight: '',
-    bmi: '',
+    fullName: currentUser?.displayName || "",
+    phoneNumber: "",
+    address: "",
+    dateOfBirth: "",
+    gender: "",
+    diabeticType: "",
+    currentHba1cLevel: "",
+    fastingBloodSugar: "",
+    preferredFoodType: "",
+    age: "",
+    height: "",
+    weight: "",
+    bmi: "",
+    currentFbs: "",
+    currentPpbs: "",
   });
 
   useEffect(() => {
@@ -55,6 +57,9 @@ const Profile = () => {
             height: profile.height || '',
             weight: profile.weight || '',
             bmi: profile.bmi || '',
+            currentFbs: profile.currentFbs || "",
+            currentPpbs: profile.currentPpbs || "",
+            
           });
         }
       } catch (error) {
@@ -145,9 +150,9 @@ const Profile = () => {
 
   return (
     <div className="profile-container">
-      <h2>{hasProfile ? 'Edit Profile' : 'Complete Your Profile'}</h2>
+      <h2>{hasProfile ? "Edit Profile" : "Complete Your Profile"}</h2>
       {error && <div className="error-message">{error}</div>}
-      
+
       <form onSubmit={handleSubmit} className="profile-form">
         <div className="form-group">
           <label htmlFor="fullName">Full Name</label>
@@ -203,8 +208,7 @@ const Profile = () => {
             name="gender"
             value={formData.gender}
             onChange={handleChange}
-            required
-          >
+            required>
             <option value="">Select Gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -303,9 +307,31 @@ const Profile = () => {
             readOnly
           />
         </div>
+        <div className="form-group">
+          <label htmlFor="currentFbs">currentFbs</label>
+          <input
+            type="number"
+            id="currentFbs"
+            name="currentFbs"
+            value={formData.currentFbs}
+            onChange={handleChange}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="currentPpbs">currentPpbs</label>
+          <input
+            type="number"
+            id="currentPpbs"
+            name="currentPpbs"
+            value={formData.currentPpbs}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
         <button type="submit" className="submit-button">
-          {hasProfile.hasProfile ? 'Update Profile' : 'Save Profile'}
+          {hasProfile.hasProfile ? "Update Profile" : "Save Profile"}
         </button>
       </form>
     </div>
