@@ -8,6 +8,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { auth, googleProvider } from "../config/firebase";
+import { createUserDocument } from "../utils/userUtils";
 
 const AuthContext = createContext();
 
@@ -29,17 +30,22 @@ export const AuthProvider = ({ children }) => {
     if (displayName) {
       await updateProfile(result.user, { displayName });
     }
+    await createUserDocument(result.user); // Create user document
     return result;
   };
 
   // Login with email/password
-  const login = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async (email, password) => {
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    await createUserDocument(result.user); // Create user document if it doesn't exist
+    return result;
   };
 
-  // Google Sign-in/Sign-up
-  const signInWithGoogle = () => {
-    return signInWithPopup(auth, googleProvider);
+  // Google Sign In
+  const signInWithGoogle = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    await createUserDocument(result.user); // Create user document for Google sign-in
+    return result;
   };
 
   // Logout function

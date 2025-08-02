@@ -1,9 +1,23 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getUserDocument } from "../utils/userUtils";
 
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
+  const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (currentUser?.uid) {
+        const userDoc = await getUserDocument(currentUser.uid);
+        setUserData(userDoc);
+        console.log("User document:", userDoc); // Debug log
+      }
+    };
+    fetchUserData();
+  }, [currentUser]);
 
   const handleLogout = async () => {
     try {
