@@ -7,7 +7,6 @@ import Forum from "../components/Forum/Forum";
 import Leaderboard from "../components/Profile/LeaderBoard";
 import "./Dashboard.css";
 
-// Circular Meter Component
 const CircularMeter = ({ value, max, label, color = "#3b82f6", size = 120 }) => {
   const percentage = Math.min((value / max) * 100, 100);
   const radius = (size - 16) / 2;
@@ -55,7 +54,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Metrics state with default values
   const [metrics, setMetrics] = useState({
     calories: { current: 0, max: 1800 },
     carbs: { current: 0, max: 200 },
@@ -76,7 +74,6 @@ const Dashboard = () => {
             return;
           }
           
-          // Fetch daily progress and update metrics
           const progress = await getDailyProgress(currentUser.uid);
           setDailyProgress(progress);
           
@@ -100,7 +97,6 @@ const Dashboard = () => {
               },
             });
           } else if (userDoc) {
-            // Use user's targets if no progress data
             setMetrics({
               calories: { current: 0, max: userDoc.dailyCalories || 1800 },
               carbs: { current: 0, max: userDoc.targetCarbs || 200 },
@@ -118,7 +114,6 @@ const Dashboard = () => {
     fetchUserData();
   }, [currentUser, navigate]);
 
-  // Function to refresh data after food logging
   const handleFoodLogged = async () => {
     if (currentUser?.uid) {
       try {
@@ -302,7 +297,6 @@ const Dashboard = () => {
               </button>
             </div>
 
-            {/* Today's Summary */}
             {dailyProgress && dailyProgress.mealsLogged && dailyProgress.mealsLogged.length > 0 && (
               <div className="today-summary">
                 <h3>Today's Meals</h3>
@@ -395,7 +389,6 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {/* Progressive Targets Info */}
                 {dailyProgress.progressInfo && (
                   <div className="targets-info">
                     <h4>🎯 Your Progressive Targets</h4>
@@ -476,7 +469,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      {/* Header */}
       <div className="dashboard-header">
         <div className="header-left">
           <h1>Welcome back, {userData.fullName || currentUser.displayName || 'User'}! 👋</h1>
@@ -492,7 +484,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
       <div className="dashboard-tabs">
         <button
           className={`tab ${activeTab === "overview" ? "active" : ""}`}
@@ -526,7 +517,6 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* Content */}
       <div className="dashboard-content">
         {renderTabContent()}
       </div>

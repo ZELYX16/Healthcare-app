@@ -2,7 +2,6 @@ import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit, where 
 import { db } from '../config/firebase';
 import foodService from '../services/foodService.js';
 
-// Calculate daily calories using diabetic diet formula
 export const calculateDailyCalories = (height, weight, age, gender, activityLevel = 'moderate', currentFbs = 100, currentPpbs = 140) => {
   const heightInMeters = height / 100;
   const ibw = 22 * Math.pow(heightInMeters, 2);
@@ -19,8 +18,7 @@ export const calculateDailyCalories = (height, weight, age, gender, activityLeve
     severityFactor = 0.85;
   } else if (currentFbs >= 126 || currentPpbs >= 180) {
     severityFactor = 0.9;
-  } // Fixed: Added missing closing brace
-  
+
   const baseCalories = 25;
   const dailyCalories = Math.round(ibw * baseCalories * activityFactors[activityLevel] * severityFactor);
   
@@ -32,8 +30,7 @@ export const calculateDailyCalories = (height, weight, age, gender, activityLeve
   };
 };
 
-// Calculate progressive targets based on percentage reduction from current blood sugar levels
-export const calculateProgressiveTargets = (initialBloodSugar, currentFbs, currentPpbs, daysElapsed = 0) => {
+export const calculateProgressiveTargets = (initialBloodSugar, currentFbs, currentPpbs) => {
   if (!initialBloodSugar || !initialBloodSugar.fbs || !initialBloodSugar.ppbs) {
     return { targetFbs: 100, targetPpbs: 140 };
   }
@@ -102,7 +99,6 @@ export const createUserDocument = async (user, additionalData = {}) => {
         proteinPercent: 20,
         fatPercent: 30,
         targetSetDate: null,
-        // Daily consumed values (reset daily)
         consumedCalories: 0,
         consumedCarbs: 0,
         consumedProtein: 0,
@@ -111,7 +107,6 @@ export const createUserDocument = async (user, additionalData = {}) => {
         ...additionalData,
       });
 
-      // Create corresponding leaderboard entry
       const leaderboardRef = doc(db, 'leaderboard', user.uid);
       await setDoc(leaderboardRef, {
         userId: user.uid,
@@ -222,7 +217,6 @@ export const updateUserProfile = async (uid, profileData) => {
   }
 };
 
-// Calculate daily macros based on user profile and blood sugar
 export const calculateDailyMacros = (user, currentFbs = null, currentPpbs = null, targetFbs = null, targetPpbs = null) => {
   const { dailyCalories = 1800 } = user;
   
@@ -265,13 +259,11 @@ export const calculateDailyMacros = (user, currentFbs = null, currentPpbs = null
   };
 };
 
-// Helper function to reset daily values if it's a new day
 const resetDailyValuesIfNeeded = async (uid, user) => {
   const today = new Date().toISOString().split('T')[0];
   const lastResetDate = user.lastResetDate;
   
   if (lastResetDate !== today) {
-    // Reset daily consumed values
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
       consumedCalories: 0,
@@ -297,14 +289,11 @@ const resetDailyValuesIfNeeded = async (uid, user) => {
   return user;
 };
 
-// Updated logFoodEntry function
 export const logFoodEntry = async (uid, foodData) => {
   if (!uid) return false;
   
   try {
     const today = new Date().toISOString().split('T')[0];
-    
-    // Get nutrition data from food database
     const nutritionData = foodService.calculateNutrition(
       foodData.foodName,
       foodData.quantity
@@ -317,13 +306,10 @@ export const logFoodEntry = async (uid, foodData) => {
       };
     }
 
-    // Get user data and reset daily values if needed
     let user = await getUserDocument(uid);
     if (!user) throw new Error('User not found');
     
     user = await resetDailyValuesIfNeeded(uid, user);
-
-    // Get today's entries count from the user document
     const mealsLoggedToday = user.mealsLoggedToday || 0;
 
     // Calculate points
@@ -332,7 +318,6 @@ export const logFoodEntry = async (uid, foodData) => {
     const firstMealBonus = mealsLoggedToday === 0 ? 5 : 0;
     const pointsEarned = basePoints + firstMealBonus;
 
-    // Create food entry with calculated nutrition
     const foodEntryRef = doc(collection(db, 'foodEntries'));
     await setDoc(foodEntryRef, {
       userId: uid,
@@ -343,7 +328,6 @@ export const logFoodEntry = async (uid, foodData) => {
       createdAt: new Date().toISOString()
     });
 
-    // Calculate streak
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const newMealsCount = mealsLoggedToday + 1;
     
@@ -360,15 +344,12 @@ export const logFoodEntry = async (uid, foodData) => {
     const newCurrentPoints = (user.currentPoints || 0) + pointsEarned;
     const newLongestStreak = Math.max(user.longestStreak || 0, newStreak);
 
-    // Update user document with consumed values AND other stats
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
-      // Update consumed values
       consumedCalories: (user.consumedCalories || 0) + nutritionData.calories,
       consumedCarbs: (user.consumedCarbs || 0) + nutritionData.carbs,
       consumedProtein: (user.consumedProtein || 0) + nutritionData.protein,
       consumedFat: (user.consumedFat || 0) + nutritionData.fat,
-      // Update game stats
       currentPoints: newCurrentPoints,
       totalPoints: newTotalPoints,
       dailyStreak: newStreak,
@@ -395,7 +376,6 @@ export const logFoodEntry = async (uid, foodData) => {
       longestStreak: newLongestStreak,
       mealsLoggedToday: newMealsCount,
       nutritionData,
-      // Return updated consumed values for immediate UI update
       updatedConsumed: {
         consumedCalories: (user.consumedCalories || 0) + nutritionData.calories,
         consumedCarbs: (user.consumedCarbs || 0) + nutritionData.carbs,
@@ -409,21 +389,16 @@ export const logFoodEntry = async (uid, foodData) => {
   }
 };
 
-// Simplified getDailyProgress - gets data directly from user document
 export const getDailyProgress = async (uid, date = null) => {
   if (!uid) return null;
   
   try {
     const targetDate = date || new Date().toISOString().split('T')[0];
     
-    // Get user profile
     let user = await getUserDocument(uid);
     if (!user) return null;
 
-    // Reset daily values if needed
     user = await resetDailyValuesIfNeeded(uid, user);
-
-    // Get meals logged for the specific date
     const foodEntriesRef = collection(db, 'foodEntries');
     const mealsQuery = query(
       foodEntriesRef,
@@ -437,10 +412,8 @@ export const getDailyProgress = async (uid, date = null) => {
       mealsLogged.push({ id: doc.id, ...doc.data() });
     });
 
-    // Sort by createdAt in JavaScript instead of Firestore to avoid index requirement
     mealsLogged.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
-    // Use targets from user document
     const macroTargets = {
       targetCalories: user.dailyCalories || 1800,
       targetCarbs: user.targetCarbs || 0,
@@ -453,7 +426,6 @@ export const getDailyProgress = async (uid, date = null) => {
       currentTargetPpbs: user.targetPpbs || 140
     };
 
-    // Use consumed values from user document
     const consumed = {
       consumedCalories: user.consumedCalories || 0,
       consumedCarbs: user.consumedCarbs || 0,
@@ -493,7 +465,6 @@ export const getDailyProgress = async (uid, date = null) => {
   }
 };
 
-// Update progressive targets from current blood sugar readings
 export const updateProgressiveTargetsFromCurrent = async (uid, currentFbs, currentPpbs) => {
   if (!uid) return false;
   
@@ -717,9 +688,7 @@ export const submitMonthlyProgress = async (uid, finalFbs, finalPpbs) => {
   }
 };
 
-// FORUM FUNCTIONS
-
-// Create a new forum thread
+//Forum
 export const createForumThread = async (uid, threadData) => {
   if (!uid) {
     console.error('No user ID provided');
@@ -734,8 +703,6 @@ export const createForumThread = async (uid, threadData) => {
     }
 
     console.log('Creating thread with data:', threadData);
-
-    // Create the thread document
     const threadRef = doc(collection(db, 'forumThreads'));
     const newThread = {
       id: threadRef.id,
@@ -758,13 +725,10 @@ export const createForumThread = async (uid, threadData) => {
     };
 
     console.log('Writing thread to database:', newThread);
-
-    // Write to Firestore
     await setDoc(threadRef, newThread);
 
     console.log('Thread created successfully with ID:', threadRef.id);
 
-    // Award points for creating a thread
     const pointsEarned = 25;
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
@@ -773,7 +737,6 @@ export const createForumThread = async (uid, threadData) => {
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    // Update leaderboard
     const leaderboardRef = doc(db, 'leaderboard', uid);
     await setDoc(leaderboardRef, {
       totalPoints: (user.totalPoints || 0) + pointsEarned,
@@ -794,7 +757,6 @@ export const createForumThread = async (uid, threadData) => {
   }
 };
 
-// Reply to a forum thread
 export const replyToThread = async (uid, threadId, replyContent) => {
   if (!uid || !threadId) return false;
   
@@ -817,8 +779,6 @@ export const replyToThread = async (uid, threadId, replyContent) => {
     };
 
     await setDoc(replyRef, newReply);
-
-    // Update thread reply count and last reply info
     const threadRef = doc(db, 'forumThreads', threadId);
     const threadDoc = await getDoc(threadRef);
     
@@ -832,7 +792,6 @@ export const replyToThread = async (uid, threadId, replyContent) => {
       }, { merge: true });
     }
 
-    // Award points for replying
     const pointsEarned = 10;
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, {
@@ -848,7 +807,6 @@ export const replyToThread = async (uid, threadId, replyContent) => {
   }
 };
 
-// Get forum threads with pagination
 export const getForumThreads = async (category = null, limitCount = 20, lastDoc = null) => {
   try {
     const threadsRef = collection(db, 'forumThreads');
@@ -885,12 +843,10 @@ export const getForumThreads = async (category = null, limitCount = 20, lastDoc 
   }
 };
 
-// Get single thread with replies
 export const getThreadWithReplies = async (threadId) => {
   if (!threadId) return null;
   
   try {
-    // Get thread
     const threadRef = doc(db, 'forumThreads', threadId);
     const threadDoc = await getDoc(threadRef);
     
@@ -898,13 +854,11 @@ export const getThreadWithReplies = async (threadId) => {
     
     const thread = { id: threadDoc.id, ...threadDoc.data() };
 
-    // Update view count
     await setDoc(threadRef, {
       views: (thread.views || 0) + 1,
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    // Get replies
     const repliesRef = collection(db, 'forumReplies');
     const repliesQuery = query(
       repliesRef,
@@ -926,7 +880,6 @@ export const getThreadWithReplies = async (threadId) => {
   }
 };
 
-// Like/Unlike thread or reply
 export const toggleLike = async (uid, itemId, itemType) => {
   if (!uid || !itemId) return false;
   
@@ -947,11 +900,9 @@ export const toggleLike = async (uid, itemId, itemType) => {
     let newLikedBy, newLikes;
     
     if (isLiked) {
-      // Unlike
       newLikedBy = likedBy.filter(id => id !== uid);
       newLikes = Math.max(0, (itemData.likes || 0) - 1);
     } else {
-      // Like
       newLikedBy = [...likedBy, uid];
       newLikes = (itemData.likes || 0) + 1;
     }

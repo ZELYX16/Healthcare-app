@@ -121,7 +121,6 @@
   overflow: hidden;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .forum {
     padding: 15px;

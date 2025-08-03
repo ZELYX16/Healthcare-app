@@ -18,7 +18,6 @@ const CreateThread = ({ categories, onThreadCreated, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Client-side validation
     if (!formData.title.trim()) {
       setError('Please enter a title for your thread');
       return;
@@ -50,7 +49,7 @@ const CreateThread = ({ categories, onThreadCreated, onCancel }) => {
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
-        .slice(0, 5); // Limit to 5 tags
+        .slice(0, 5);
 
       const threadData = {
         title: formData.title.trim(),
@@ -67,8 +66,6 @@ const CreateThread = ({ categories, onThreadCreated, onCancel }) => {
 
       if (result.success) {
         setSuccess(`Thread created successfully! You earned ${result.pointsEarned} points.`);
-        
-        // Clear form
         setFormData({
           title: '',
           content: '',
@@ -76,7 +73,6 @@ const CreateThread = ({ categories, onThreadCreated, onCancel }) => {
           tags: ''
         });
         
-        // Wait a moment to show success message, then navigate back
         setTimeout(() => {
           onThreadCreated();
         }, 1500);
@@ -93,7 +89,6 @@ const CreateThread = ({ categories, onThreadCreated, onCancel }) => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear errors when user starts typing
     if (error) setError('');
     if (success) setSuccess('');
   };
@@ -200,7 +195,7 @@ const CreateThread = ({ categories, onThreadCreated, onCancel }) => {
         </div>
       </form>
 
-      {/* Preview Section */}
+      
       {(formData.title.trim() || formData.content.trim()) && (
         <div className="thread-preview">
           <h4>Preview:</h4>

@@ -25,7 +25,6 @@ const Forum = () => {
     { id: 'general', name: 'General Discussion', icon: '🗣️' }
   ];
 
-  // Optimized fetchThreads - only include dependencies that actually affect the function
   const fetchThreads = useCallback(async () => {
     try {
       setLoading(true);
@@ -47,12 +46,11 @@ const Forum = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, searchTerm]); // Removed refreshTrigger - it's not used in the function
+  }, [selectedCategory, searchTerm]);
 
-  // Effect for fetching threads when dependencies change
   useEffect(() => {
     fetchThreads();
-  }, [fetchThreads, refreshTrigger]); // Keep refreshTrigger in useEffect, not useCallback
+  }, [fetchThreads, refreshTrigger]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -61,32 +59,24 @@ const Forum = () => {
     }
   };
 
-  // Simplified handleThreadCreated - removed unnecessary dependencies
   const handleThreadCreated = useCallback(() => {
     console.log('Thread created, refreshing forum...');
     setActiveView('list');
-    
-    // Force refresh by updating trigger
     setRefreshTrigger(prev => prev + 1);
-  }, []); // No dependencies needed - only uses setState functions
+  }, []);
 
-  // Simplified handleThreadSelect - no dependencies needed
   const handleThreadSelect = useCallback((thread) => {
     console.log('Thread selected:', thread);
     setSelectedThread(thread);
     setActiveView('thread');
   }, []);
 
-  // Simplified handleBackToList - no dependencies needed
   const handleBackToList = useCallback(() => {
     setActiveView('list');
     setSelectedThread(null);
-    
-    // Refresh threads when returning to list
     setRefreshTrigger(prev => prev + 1);
   }, []);
 
-  // Manual refresh function - no dependencies needed
   const handleManualRefresh = useCallback(() => {
     console.log('Manual refresh triggered');
     setRefreshTrigger(prev => prev + 1);

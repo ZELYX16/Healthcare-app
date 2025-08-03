@@ -11,7 +11,6 @@ const ThreadView = ({ thread: initialThread, onBack }) => {
   const [replyContent, setReplyContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Use useCallback to memoize the fetchThreadData function
   const fetchThreadData = useCallback(async () => {
     if (!initialThread?.id) return;
     
@@ -24,11 +23,11 @@ const ThreadView = ({ thread: initialThread, onBack }) => {
     } finally {
       setLoading(false);
     }
-  }, [initialThread?.id]); // Dependency: initialThread.id
+  }, [initialThread?.id]);
 
   useEffect(() => {
     fetchThreadData();
-  }, [fetchThreadData]); // Now fetchThreadData is properly memoized
+  }, [fetchThreadData]);
 
   const handleReply = async (e) => {
     e.preventDefault();
@@ -39,7 +38,7 @@ const ThreadView = ({ thread: initialThread, onBack }) => {
       const result = await replyToThread(currentUser.uid, initialThread.id, replyContent);
       if (result.success) {
         setReplyContent('');
-        await fetchThreadData(); // Refresh to show new reply
+        await fetchThreadData();
       }
     } catch (error) {
       console.error('Error replying:', error);
@@ -52,7 +51,7 @@ const ThreadView = ({ thread: initialThread, onBack }) => {
     try {
       const result = await toggleLike(currentUser.uid, itemId, itemType);
       if (result.success) {
-        await fetchThreadData(); // Refresh to show updated likes
+        await fetchThreadData();
       }
     } catch (error) {
       console.error('Error liking:', error);

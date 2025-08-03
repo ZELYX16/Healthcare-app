@@ -69,7 +69,6 @@
   font-size: 1.2rem;
 }
 
-/* Main Thread Post */
 .thread-main-post {
   background: #f8fafc;
   padding: 25px;
@@ -189,7 +188,6 @@
   color: #ef4444;
 }
 
-/* Replies Section */
 .replies-section {
   margin-top: 40px;
 }
@@ -203,7 +201,6 @@
   border-bottom: 2px solid #e2e8f0;
 }
 
-/* Reply Form */
 .reply-form {
   background: white;
   padding: 20px;
@@ -256,7 +253,6 @@
   transform: none;
 }
 
-/* Replies List */
 .replies-list {
   display: flex;
   flex-direction: column;
@@ -317,7 +313,6 @@
   border: 1px dashed #d1d5db;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .thread-view {
     padding: 15px;

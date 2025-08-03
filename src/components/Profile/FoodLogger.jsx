@@ -65,8 +65,6 @@ const FoodLogger = ({ onFoodLogged }) => {
         setResult(result);
         setFormData({ foodName: '', quantity: '', mealType: 'breakfast' });
         setPreviewNutrition(null);
-        
-        // Call the callback to refresh dashboard data
         if (onFoodLogged) {
           onFoodLogged();
         }

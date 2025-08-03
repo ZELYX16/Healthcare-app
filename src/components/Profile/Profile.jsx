@@ -1,214 +1,185 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { checkUserProfile, getUserDocument, updateUserProfile } from '../../utils/userUtils';
+import { useNavigate } from 'react-router-dom';
+import { getUserDocument, updateUserProfile } from '../../utils/userUtils';
 import './Profile.css';
 
 const Profile = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-
+  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [hasProfile, setHasProfile] = useState(false);
-  const [profileData, setProfileData] = useState(null);
+  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
-    fullName: currentUser?.displayName || "",
-    phoneNumber: "",
-    address: "",
-    dateOfBirth: "",
-    gender: "",
-    diabeticType: "",
-    currentHba1cLevel: "",
-    fastingBloodSugar: "",
-    preferredFoodType: "",
-    age: "",
-    height: "",
-    weight: "",
-    bmi: "",
-    currentFbs: "",
-    currentPpbs: "",
+    fullName: '',
+    age: '',
+    gender: '',
+    height: '',
+    weight: '',
+    activityLevel: 'moderate',
+    currentFbs: '',
+    currentPpbs: '',
+    medicalHistory: '',
+    emergencyContact: '',
+    emergencyPhone: ''
   });
 
-  useEffect(() => {
-    const checkProfile = async () => {
-      if (!currentUser?.uid) return;
-      
-      try {
-        setLoading(true);
-        const exists = await checkUserProfile(currentUser.uid);
-        setHasProfile(exists);
-        
-        if (exists) {
-          const profile = await getUserDocument(currentUser.uid);
-          setProfileData(profile);
-          setFormData({
-            fullName: profile.fullName || currentUser?.displayName || '',
-            phoneNumber: profile.phoneNumber || '',
-            address: profile.address || '',
-            dateOfBirth: profile.dateOfBirth || '',
-            gender: profile.gender || '',
-            diabeticType: profile.diabeticType || '',
-            currentHba1cLevel: profile.currentHba1cLevel || '',
-            fastingBloodSugar: profile.fastingBloodSugar || '',
-            preferredFoodType: profile.preferredFoodType || '',
-            age: profile.age || '',
-            height: profile.height || '',
-            weight: profile.weight || '',
-            bmi: profile.bmi || '',
-            currentFbs: profile.currentFbs || "",
-            currentPpbs: profile.currentPpbs || "",
-            
-          });
-        }
-      } catch (error) {
-        console.error('Error checking profile:', error);
-        setError('Failed to load profile data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkProfile();
-  }, [currentUser]);
-
-  // Auto-calculate BMI when height or weight changes
-  useEffect(() => {
-    const { height, weight } = formData;
-    if (height && weight) {
-      const heightInMeters = parseFloat(height) / 100;
-      const bmi = (parseFloat(weight) / (heightInMeters * heightInMeters)).toFixed(2);
-      setFormData((prev) => ({ ...prev, bmi }));
-    }
-  }, [formData.height, formData.weight]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+  // Fetch user data
+  const fetchUserData = useCallback(async () => {
+    if (!currentUser?.uid) return;
+    
     try {
-      await updateUserProfile(currentUser.uid, {
-        ...formData,
-        email: currentUser.email,
-        updatedAt: new Date().toISOString(),
-      });
-      setHasProfile(true);
-      setProfileData(formData);
-      navigate("/dashboard");
+      setLoading(true);
+      const user = await getUserDocument(currentUser.uid);
+      
+      if (user) {
+        setUserData(user);
+        setFormData({
+          fullName: user.fullName || '',
+          age: user.age || '',
+          gender: user.gender || '',
+          height: user.height || '',
+          weight: user.weight || '',
+          activityLevel: user.activityLevel || 'moderate',
+          currentFbs: user.currentFbs || '',
+          currentPpbs: user.currentPpbs || '',
+          medicalHistory: user.medicalHistory || '',
+          emergencyContact: user.emergencyContact || '',
+          emergencyPhone: user.emergencyPhone || ''
+        });
+      }
     } catch (error) {
-      setError("Failed to save profile");
-      console.error("Error:", error);
+      console.error('Error fetching user data:', error);
+      setError('Failed to load profile data');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [currentUser?.uid]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  // Handle form input changes
+  const handleInputChange = useCallback((field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (error) setError('');
+    if (success) setSuccess('');
+  }, []);
+
+  // Handle form submission
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    
+    if (!currentUser?.uid) {
+      setError('User not authenticated');
+      return;
+    }
+
+    // Validation
+    if (!formData.fullName.trim()) {
+      setError('Full name is required');
+      return;
+    }
+
+    if (!formData.age || formData.age < 1 || formData.age > 120) {
+      setError('Please enter a valid age');
+      return;
+    }
+
+    if (!formData.height || formData.height < 50 || formData.height > 300) {
+      setError('Please enter a valid height in cm');
+      return;
+    }
+
+    if (!formData.weight || formData.weight < 20 || formData.weight > 500) {
+      setError('Please enter a valid weight in kg');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    try {
+      const profileData = {
+        ...formData,
+        age: parseInt(formData.age),
+        height: parseFloat(formData.height),
+        weight: parseFloat(formData.weight),
+        currentFbs: parseFloat(formData.currentFbs) || 100,
+        currentPpbs: parseFloat(formData.currentPpbs) || 140
+      };
+
+      const result = await updateUserProfile(currentUser.uid, profileData);
+      
+      if (result) {
+        setSuccess('Profile updated successfully!');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+      } else {
+        setError('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError('Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  }, [currentUser?.uid, formData, navigate]);
 
   if (loading) {
     return (
       <div className="profile-container">
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
-  if (hasProfile.hasProfile && profileData) {
-    return (
-      <div className="profile-container">
-        <h2>Profile Information</h2>
-        {error && <div className="error-message">{error}</div>}
-        <div className="profile-info">
-          <p><strong>Name:</strong> {profileData.fullName}</p>
-          <p><strong>Email:</strong> {profileData.email}</p>
-          <p><strong>Phone:</strong> {profileData.phoneNumber}</p>
-          <p><strong>Address:</strong> {profileData.address}</p>
-          <p><strong>Date of Birth:</strong> {profileData.dateOfBirth}</p>
-          <p><strong>Gender:</strong> {profileData.gender}</p>
-          <p><strong>Diabetic Type:</strong> {profileData.diabeticType}</p>
-          <p><strong>Current HbA1c Level:</strong> {profileData.currentHba1cLevel}</p>
-          <p><strong>Fasting Blood Sugar:</strong> {profileData.fastingBloodSugar}</p>
-          <p><strong>Preferred Food Type:</strong> {profileData.preferredFoodType}</p>
-          <p><strong>Age:</strong> {profileData.age}</p>
-          <p><strong>Height:</strong> {profileData.height} cm</p>
-          <p><strong>Weight:</strong> {profileData.weight} kg</p>
-          <p><strong>BMI:</strong> {profileData.bmi}</p>
-          <button 
-            onClick={() => setHasProfile(false)} 
-            className="submit-button"
-            style={{ marginTop: '1rem' }}
-          >
-            Edit Profile
-          </button>
-        </div>
+        <div className="loading">Loading profile...</div>
       </div>
     );
   }
 
   return (
     <div className="profile-container">
-      <h2>{hasProfile ? "Edit Profile" : "Complete Your Profile"}</h2>
+      <h2>Complete Your Profile</h2>
+      <p>Help us personalize your diabetes management experience</p>
+
       {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
 
       <form onSubmit={handleSubmit} className="profile-form">
         <div className="form-group">
-          <label htmlFor="fullName">Full Name</label>
+          <label htmlFor="fullName">Full Name *</label>
           <input
             type="text"
             id="fullName"
-            name="fullName"
             value={formData.fullName}
-            onChange={handleChange}
+            onChange={(e) => handleInputChange('fullName', e.target.value)}
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="phoneNumber">Phone Number</label>
+          <label htmlFor="age">Age *</label>
           <input
-            type="tel"
-            id="phoneNumber"
-            name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleChange}
+            type="number"
+            id="age"
+            value={formData.age}
+            onChange={(e) => handleInputChange('age', e.target.value)}
+            min="1"
+            max="120"
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="address">Address</label>
-          <textarea
-            id="address"
-            name="address"
-            value={formData.address}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="dateOfBirth">Date of Birth</label>
-          <input
-            type="date"
-            id="dateOfBirth"
-            name="dateOfBirth"
-            value={formData.dateOfBirth}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="gender">Gender</label>
+          <label htmlFor="gender">Gender *</label>
           <select
             id="gender"
-            name="gender"
             value={formData.gender}
-            onChange={handleChange}
-            required>
+            onChange={(e) => handleInputChange('gender', e.target.value)}
+            required
+          >
             <option value="">Select Gender</option>
             <option value="male">Male</option>
             <option value="female">Female</option>
@@ -217,121 +188,112 @@ const Profile = () => {
         </div>
 
         <div className="form-group">
-          <label htmlFor="diabeticType">Diabetic Type</label>
-          <input
-            type="text"
-            id="diabeticType"
-            name="diabeticType"
-            value={formData.diabeticType}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="currentHba1cLevel">Current HbA1c Level</label>
-          <input
-            type="number"
-            id="currentHba1cLevel"
-            name="currentHba1cLevel"
-            value={formData.currentHba1cLevel}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="fastingBloodSugar">Fasting Blood Sugar</label>
-          <input
-            type="number"
-            id="fastingBloodSugar"
-            name="fastingBloodSugar"
-            value={formData.fastingBloodSugar}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="preferredFoodType">Preferred Food Type</label>
-          <input
-            type="text"
-            id="preferredFoodType"
-            name="preferredFoodType"
-            value={formData.preferredFoodType}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="age">Age</label>
-          <input
-            type="number"
-            id="age"
-            name="age"
-            value={formData.age}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="height">Height (cm)</label>
+          <label htmlFor="height">Height (cm) *</label>
           <input
             type="number"
             id="height"
-            name="height"
             value={formData.height}
-            onChange={handleChange}
+            onChange={(e) => handleInputChange('height', e.target.value)}
+            min="50"
+            max="300"
+            step="0.1"
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="weight">Weight (kg)</label>
+          <label htmlFor="weight">Weight (kg) *</label>
           <input
             type="number"
             id="weight"
-            name="weight"
             value={formData.weight}
-            onChange={handleChange}
+            onChange={(e) => handleInputChange('weight', e.target.value)}
+            min="20"
+            max="500"
+            step="0.1"
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="bmi">BMI (Auto-calculated)</label>
-          <input
-            type="text"
-            id="bmi"
-            name="bmi"
-            value={formData.bmi}
-            readOnly
-          />
+          <label htmlFor="activityLevel">Activity Level</label>
+          <select
+            id="activityLevel"
+            value={formData.activityLevel}
+            onChange={(e) => handleInputChange('activityLevel', e.target.value)}
+          >
+            <option value="sedentary">Sedentary (little/no exercise)</option>
+            <option value="light">Light (light exercise 1-3 days/week)</option>
+            <option value="moderate">Moderate (moderate exercise 3-5 days/week)</option>
+            <option value="high">High (hard exercise 6-7 days/week)</option>
+          </select>
         </div>
+
         <div className="form-group">
-          <label htmlFor="currentFbs">currentFbs</label>
+          <label htmlFor="currentFbs">Current Fasting Blood Sugar (mg/dL)</label>
           <input
             type="number"
             id="currentFbs"
-            name="currentFbs"
             value={formData.currentFbs}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="currentPpbs">currentPpbs</label>
-          <input
-            type="number"
-            id="currentPpbs"
-            name="currentPpbs"
-            value={formData.currentPpbs}
-            onChange={handleChange}
-            required
+            onChange={(e) => handleInputChange('currentFbs', e.target.value)}
+            min="50"
+            max="500"
+            placeholder="100"
           />
         </div>
 
-        <button type="submit" className="submit-button">
-          {hasProfile.hasProfile ? "Update Profile" : "Save Profile"}
+        <div className="form-group">
+          <label htmlFor="currentPpbs">Current Post-Meal Blood Sugar (mg/dL)</label>
+          <input
+            type="number"
+            id="currentPpbs"
+            value={formData.currentPpbs}
+            onChange={(e) => handleInputChange('currentPpbs', e.target.value)}
+            min="50"
+            max="500"
+            placeholder="140"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="medicalHistory">Medical History (Optional)</label>
+          <textarea
+            id="medicalHistory"
+            value={formData.medicalHistory}
+            onChange={(e) => handleInputChange('medicalHistory', e.target.value)}
+            rows="4"
+            placeholder="Any relevant medical conditions, medications, allergies..."
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="emergencyContact">Emergency Contact Name</label>
+          <input
+            type="text"
+            id="emergencyContact"
+            value={formData.emergencyContact}
+            onChange={(e) => handleInputChange('emergencyContact', e.target.value)}
+            placeholder="Full name of emergency contact"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="emergencyPhone">Emergency Contact Phone</label>
+          <input
+            type="tel"
+            id="emergencyPhone"
+            value={formData.emergencyPhone}
+            onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
+            placeholder="+1234567890"
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          className="submit-button"
+          disabled={saving}
+        >
+          {saving ? 'Saving...' : 'Save Profile'}
         </button>
       </form>
     </div>

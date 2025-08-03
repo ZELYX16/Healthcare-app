@@ -89,7 +89,6 @@ const Leaderboard = () => {
         </div>
       ) : (
         <>
-          {/* Top 3 Podium */}
           {leaderboard.length >= 3 && (
             <div className="podium">
               <div className="podium-item second">
@@ -121,7 +120,6 @@ const Leaderboard = () => {
             </div>
           )}
 
-          {/* Full Leaderboard List */}
           <div className="leaderboard-list">
             <h3>Full Rankings</h3>
             {leaderboard.map((user) => (
@@ -160,7 +158,6 @@ const Leaderboard = () => {
             ))}
           </div>
 
-          {/* Motivation Section */}
           <div className="motivation-section">
             <h3>💪 Keep Going!</h3>
             <div className="motivation-cards">

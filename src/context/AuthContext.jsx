@@ -30,14 +30,14 @@ export const AuthProvider = ({ children }) => {
     if (displayName) {
       await updateProfile(result.user, { displayName });
     }
-    await createUserDocument(result.user); // Create user document
+    await createUserDocument(result.user);
     return result;
   };
 
   // Login with email/password
   const login = async (email, password) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
-    await createUserDocument(result.user); // Create user document if it doesn't exist
+    await createUserDocument(result.user);
     return result;
   };
 

@@ -16,7 +16,6 @@ const ProtectedRoute = ({ children }) => {
   return currentUser ? children : <Navigate to="/login" />;
 };
 
-// Public Route Component (redirects to dashboard if logged in)
 const PublicRoute = ({ children }) => {
   const { currentUser } = useAuth();
   return !currentUser ? children : <Navigate to="/dashboard" />;

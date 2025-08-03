@@ -33,7 +33,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Load existing medical data (for non-onboarding mode)
   useEffect(() => {
     const loadMedicalData = async () => {
       if (currentUser && !isOnboarding) {
@@ -57,7 +56,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
     loadMedicalData();
   }, [currentUser, isOnboarding]);
 
-  // Auto-calculate BMI when height or weight changes
   useEffect(() => {
     if (formData.height && formData.weight) {
       const heightInMeters = parseFloat(formData.height) / 100;
@@ -83,7 +81,7 @@ const MedicalHistory = ({ isOnboarding = false }) => {
       [name]: value,
     }));
   };
-
+  //BMI Change
   const getBMICategory = (bmi) => {
     const bmiValue = parseFloat(bmi);
     if (bmiValue < 18.5) return { category: "Underweight", color: "#3b82f6" };
@@ -147,7 +145,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
       );
 
       if (isOnboarding) {
-        // Complete onboarding and redirect to dashboard
         await completeOnboarding();
         setMessage(
           "Welcome! Your medical history has been saved successfully."
@@ -207,7 +204,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="medical-form">
-          {/* Diabetes Information Section */}
           <div className="form-section">
             <h3>🩺 Diabetes Information</h3>
 
@@ -307,7 +303,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
             </div>
           </div>
 
-          {/* Health Conditions Section */}
           <div className="form-section">
             <h3>🏥 Health Conditions</h3>
 
@@ -360,7 +355,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
             </div>
           </div>
 
-          {/* Personal Information Section */}
           <div className="form-section">
             <h3>👤 Personal Information</h3>
 
@@ -442,7 +436,6 @@ const MedicalHistory = ({ isOnboarding = false }) => {
               </div>
             </div>
 
-            {/* BMI Display */}
             {formData.bmi && (
               <div className="bmi-display">
                 <label>BMI (Auto-calculated)</label>

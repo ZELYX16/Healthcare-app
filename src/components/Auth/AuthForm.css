@@ -152,8 +152,6 @@
   }
 }
 
-/* Add these new styles to your existing CSS */
-
 .google-auth-button {
   width: 100%;
   display: flex;
@@ -211,10 +209,9 @@
   background: white;
 }
 
-/* Update the existing auth-form margin */
 .auth-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  margin-top: 0; /* Remove top margin since we have divider */
+  margin-top: 0;
 }

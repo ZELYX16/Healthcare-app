@@ -4,8 +4,6 @@ class FoodService {
   constructor() {
     this.foodDatabase = foodDatabase;
     console.log(`Loaded ${this.foodDatabase.length} Indian food items`);
-    
-    // Debug: Log first few items to see actual structure
     if (this.foodDatabase.length > 0) {
       console.log('Sample food item structure:', this.foodDatabase[0]);
     }
@@ -16,8 +14,6 @@ class FoodService {
     
     const searchTerm = foodName.toLowerCase().trim();
     console.log('Searching for:', searchTerm);
-    
-    // Exact match first using the correct field name
     let food = this.foodDatabase.find(item => 
       item["Dish Name"]?.toLowerCase() === searchTerm
     );
@@ -27,7 +23,6 @@ class FoodService {
       return food;
     }
     
-    // Partial match
     food = this.foodDatabase.find(item => {
       const itemName = item["Dish Name"]?.toLowerCase();
       const matches = itemName?.includes(searchTerm) || 
@@ -42,7 +37,6 @@ class FoodService {
     
     if (food) return food;
     
-    // Fuzzy search for common variations
     food = this.foodDatabase.find(item => {
       const itemName = item["Dish Name"]?.toLowerCase();
       const words = searchTerm.split(' ');
@@ -81,7 +75,6 @@ class FoodService {
     
     console.log('Calculating nutrition for:', food["Dish Name"]);
     
-    // Calculate proportionally (your dataset is per 100g)
     const multiplier = quantityInGrams / 100;
     
     return {
@@ -103,7 +96,6 @@ class FoodService {
     const searchTerm = query.toLowerCase().trim();
     const results = [];
     
-    // Add matches
     const matches = this.foodDatabase.filter(item => {
       const itemName = item["Dish Name"]?.toLowerCase();
       return itemName?.includes(searchTerm) || 
@@ -139,7 +131,6 @@ class FoodService {
       .map(item => item["Dish Name"]);
   }
 
-  // Get diabetic-friendly foods (low sugar, high fiber)
   getDiabeticFriendlyFoods(limit = 20) {
     return this.foodDatabase
       .filter(item => (item["Free Sugar (g)"] || 0) <= 5 && (item["Fibre (g)"] || 0) >= 2)
@@ -154,12 +145,10 @@ class FoodService {
       }));
   }
 
-  // Debug function to check food database
   debugDatabase() {
     console.log('Total foods in database:', this.foodDatabase.length);
     console.log('First 5 foods:', this.foodDatabase.slice(0, 5).map(item => item["Dish Name"]));
     
-    // Check for common fields
     if (this.foodDatabase.length > 0) {
       const firstItem = this.foodDatabase[0];
       console.log('Available fields:', Object.keys(firstItem));

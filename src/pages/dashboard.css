@@ -1,4 +1,3 @@
-/* Dashboard Container */
 .dashboard {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -6,7 +5,6 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Loading States */
 .dashboard-loading {
   display: flex;
   justify-content: center;
@@ -57,7 +55,6 @@
   font-weight: 600;
 }
 
-/* Header */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -118,7 +115,6 @@
   transform: translateY(-2px);
 }
 
-/* Tabs */
 .dashboard-tabs {
   display: flex;
   justify-content: center;
@@ -152,7 +148,6 @@
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
 }
 
-/* Content */
 .dashboard-content {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -162,14 +157,12 @@
   min-height: 500px;
 }
 
-/* Overview Content */
 .overview-content {
   display: flex;
   flex-direction: column;
   gap: 30px;
 }
 
-/* Stats Row */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -223,7 +216,6 @@
   margin-top: 4px;
 }
 
-/* Metrics Grid */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -256,7 +248,6 @@
   color: #374151;
 }
 
-/* Circular Meter */
 .circular-meter {
   position: relative;
   display: inline-block;
@@ -301,7 +292,6 @@
   letter-spacing: 0.5px;
 }
 
-/* Progress Bars */
 .progress-bar {
   width: 100%;
   height: 8px;
@@ -321,7 +311,6 @@
 .protein-fill { background: linear-gradient(90deg, #10b981, #34d399); }
 .fat-fill { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
 
-/* Quick Actions */
 .quick-actions {
   display: flex;
   justify-content: center;
@@ -361,7 +350,6 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-/* Today's Summary */
 .today-summary {
   background: #f8fafc;
   padding: 25px;
@@ -422,7 +410,6 @@
   padding: 10px;
 }
 
-/* Tab Content Styles */
 .food-tab-content,
 .blood-sugar-tab-content,
 .leaderboard-tab-content {
@@ -432,7 +419,6 @@
   box-shadow: none;
 }
 
-/* Progress Content */
 .progress-content h3 {
   margin: 0 0 25px 0;
   color: #1e293b;
@@ -481,7 +467,6 @@
   color: #1e293b;
 }
 
-/* Meals List */
 .meals-list {
   background: white;
   border-radius: 15px;
@@ -546,7 +531,6 @@
   font-size: 0.9rem;
 }
 
-/* Targets Info */
 .targets-info {
   background: #f0f9ff;
   padding: 25px;
@@ -587,7 +571,6 @@
   color: #3b82f6;
 }
 
-/* No Progress State */
 .no-progress {
   text-align: center;
   padding: 60px 20px;
@@ -622,7 +605,6 @@
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
 }
 
-/* Responsive Design */
 @media (max-width: 1024px) {
   .metrics-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -730,7 +712,6 @@
   }
 }
 
-/* Animation for smooth transitions */
 .dashboard-content > * {
   animation: fadeIn 0.5s ease-in-out;
 }
