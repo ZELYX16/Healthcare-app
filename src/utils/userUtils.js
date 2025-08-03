@@ -29,6 +29,7 @@ export const calculateDailyCalories = (height, weight, age, gender, activityLeve
     activityFactor: activityFactors[activityLevel]
   };
 };
+}
 
 export const calculateProgressiveTargets = (initialBloodSugar, currentFbs, currentPpbs) => {
   if (!initialBloodSugar || !initialBloodSugar.fbs || !initialBloodSugar.ppbs) {
