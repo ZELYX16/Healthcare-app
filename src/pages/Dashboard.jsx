@@ -1,200 +1,158 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getUserDocument } from "../utils/userUtils";
-
-
-
-
+import { getUserDocument, getDailyProgress } from "../utils/userUtils";
+import FoodLogger from "../components/Profile/FoodLogger";
+// import BloodSugarLogger from "../components/BloodSugarLogger/BloodSugarLogger";
+// import Leaderboard from "../components/Leaderboard/Leaderboard";
+import "./Dashboard.css";
 
 // Circular Meter Component
-const CircularMeter = ({
-  value,
-  max,
-  label,
-  color = "#3b82f6",
-  size = 120,
-}) => {
+const CircularMeter = ({ value, max, label, color = "#3b82f6", size = 120 }) => {
   const percentage = Math.min((value / max) * 100, 100);
   const radius = (size - 16) / 2;
   const circumference = 2 * Math.PI * radius;
-  const strokeDasharray = `${
-    (percentage / 100) * circumference
-  } ${circumference}`;
+  const strokeDasharray = `${(percentage / 100) * circumference} ${circumference}`;
 
   return (
-    <div style={{ position: "relative", width: size, height: size }}>
-      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+    <div className="circular-meter" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="circular-meter-svg">
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
+          fill="none"
           stroke="#e5e7eb"
           strokeWidth="8"
-          fill="none"
         />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={color}
-          strokeWidth="15"
           fill="none"
-          strokeLinecap="round"
+          stroke={color}
+          strokeWidth="8"
           strokeDasharray={strokeDasharray}
-          style={{
-            transition: "stroke-dasharray 0.3s ease",
-          }}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          className="progress-circle"
         />
       </svg>
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          textAlign: "center",
-        }}>
-        <div style={{ fontSize: "20px", fontWeight: "bold", color }}>
-          {value}
-        </div>
-        <div style={{ fontSize: "12px", color: "#666" }}>{label}</div>
+      <div className="meter-content">
+        <div className="meter-value">{value}</div>
+        <div className="meter-max">/ {max}</div>
+        <div className="meter-label">{label}</div>
       </div>
     </div>
   );
 };
 
-
-const FloatingPlusButton = ({ onClick, size = 60, color = "#10b981" }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  const fabStyle = {
-    position: "fixed",
-    bottom: "2rem",
-    right: "2rem",
-    width: size,
-    height: size,
-    borderRadius: "50%",
-    backgroundColor: color,
-    color: "white",
-    border: "none",
-    fontSize: size / 2.5,
-    fontWeight: "300",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    boxShadow: isHovered
-      ? "0 8px 20px rgba(0, 0, 0, 0.2)"
-      : "0 6px 12px rgba(0, 0, 0, 0.15)",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    transform: isHovered ? "scale(1.1)" : "scale(1)",
-    zIndex: 1000,
-    outline: "none",
-  };
-
-  return (
-    <button
-      style={fabStyle}
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      aria-label="Add new meal"
-      title="Add new meal">
-      +
-    </button>
-  );
-};
-
-
-
-
 const Dashboard = () => {
   const { currentUser, logout } = useAuth();
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
-  const [dataLoaded, setDataLoaded] = useState(false); // Track if data has been loaded
+  const [activeTab, setActiveTab] = useState("overview");
+  const [dailyProgress, setDailyProgress] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const handleAddMeal = () => {
-    navigate("/add-meal");
-  };
-
-  // Dynamic metrics based on user data - only nutrition metrics
+  // Metrics state with default values
   const [metrics, setMetrics] = useState({
-    calories: { current: 0, max: 2000, color: "#3b82f6" },
-    carbs: { current: 0, max: 300, color: "#f59e0b" },
-    protein: { current: 0, max: 150, color: "#10b981" },
-    fat: { current: 0, max: 80, color: "#ef4444" },
+    calories: { current: 0, max: 1800 },
+    carbs: { current: 0, max: 200 },
+    protein: { current: 0, max: 150 },
+    fat: { current: 0, max: 60 },
   });
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // Wait for currentUser to be defined (not null or undefined)
-      if (currentUser === null) {
-        // User is not authenticated, redirect to login
-        navigate("/login");
-        return;
-      }
-
-      if (currentUser === undefined) {
-        // Still loading authentication state
-        return;
-      }
-
-      try {
-        setLoading(true);
-        console.log("Fetching user data for:", currentUser.uid);
-
-        const userDoc = await getUserDocument(currentUser.uid);
-        setUserData(userDoc);
-        setDataLoaded(true);
-        console.log("User document:", userDoc);
-
-        // Check if user needs to complete profile FIRST
-        if (!userDoc || userDoc.hasProfile === false) {
-          console.log(
-            "Redirecting to profile - hasProfile:",
-            userDoc?.hasProfile
-          );
-          navigate("/profile");
-          return;
+      if (currentUser?.uid) {
+        try {
+          const userDoc = await getUserDocument(currentUser.uid);
+          setUserData(userDoc);
+          console.log("User document:", userDoc);
+          
+          if (userDoc && userDoc.hasProfile === false) {
+            navigate("/profile");
+            return;
+          }
+          
+          // Fetch daily progress and update metrics
+          const progress = await getDailyProgress(currentUser.uid);
+          setDailyProgress(progress);
+          
+          if (progress) {
+            setMetrics({
+              calories: { 
+                current: Math.round(progress.consumed.consumedCalories || 0), 
+                max: Math.round(progress.targets.targetCalories || userDoc?.dailyCalories || 1800) 
+              },
+              carbs: { 
+                current: Math.round(progress.consumed.consumedCarbs || 0), 
+                max: Math.round(progress.targets.targetCarbs || userDoc?.targetCarbs || 200) 
+              },
+              protein: { 
+                current: Math.round(progress.consumed.consumedProtein || 0), 
+                max: Math.round(progress.targets.targetProtein || userDoc?.targetProtein || 150) 
+              },
+              fat: { 
+                current: Math.round(progress.consumed.consumedFat || 0), 
+                max: Math.round(progress.targets.targetFat || userDoc?.targetFat || 60) 
+              },
+            });
+          } else if (userDoc) {
+            // Use user's targets if no progress data
+            setMetrics({
+              calories: { current: 0, max: userDoc.dailyCalories || 1800 },
+              carbs: { current: 0, max: userDoc.targetCarbs || 200 },
+              protein: { current: 0, max: userDoc.targetProtein || 150 },
+              fat: { current: 0, max: userDoc.targetFat || 60 },
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        } finally {
+          setLoading(false);
         }
-
-        // Update metrics from user data only if user has completed profile
-        if (userDoc) {
-          setMetrics((prev) => ({
-            calories: {
-              ...prev.calories,
-              current: userDoc.currentCalories || 0,
-              max: userDoc.dailyCalories || 2000,
-            },
-            carbs: {
-              ...prev.carbs,
-              current: userDoc.currentCarbs || 0,
-              max: userDoc.targetCarbs || 300,
-            },
-            protein: {
-              ...prev.protein,
-              current: userDoc.currentProtein || 0,
-              max: userDoc.targetProtein || 150,
-            },
-            fat: {
-              ...prev.fat,
-              current: userDoc.currentFat || 0,
-              max: userDoc.targetFat || 80,
-            },
-          }));
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchUserData();
-  }, [currentUser, navigate]); // Re-run when currentUser changes
+  }, [currentUser, navigate]);
+
+  // Function to refresh data after food logging
+  const handleFoodLogged = async () => {
+    if (currentUser?.uid) {
+      try {
+        const progress = await getDailyProgress(currentUser.uid);
+        const userDoc = await getUserDocument(currentUser.uid);
+        
+        setDailyProgress(progress);
+        setUserData(userDoc);
+        
+        if (progress) {
+          setMetrics({
+            calories: { 
+              current: Math.round(progress.consumed.consumedCalories || 0), 
+              max: Math.round(progress.targets.targetCalories || 1800) 
+            },
+            carbs: { 
+              current: Math.round(progress.consumed.consumedCarbs || 0), 
+              max: Math.round(progress.targets.targetCarbs || 200) 
+            },
+            protein: { 
+              current: Math.round(progress.consumed.consumedProtein || 0), 
+              max: Math.round(progress.targets.targetProtein || 150) 
+            },
+            fat: { 
+              current: Math.round(progress.consumed.consumedFat || 0), 
+              max: Math.round(progress.targets.targetFat || 60) 
+            },
+          });
+        }
+      } catch (error) {
+        console.error("Error refreshing data:", error);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -209,265 +167,369 @@ const Dashboard = () => {
     navigate("/profile");
   };
 
-  // Show loading spinner while authentication is being determined
-  if (currentUser === undefined || loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-          fontFamily:
-            '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-        }}>
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              fontSize: "2rem",
-              marginBottom: "1rem",
-              animation: "spin 1s linear infinite",
-            }}>
-            ⏳
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "overview":
+        return (
+          <div className="overview-content">
+            <div className="stats-row">
+              <div className="stat-card">
+                <div className="stat-icon">🔥</div>
+                <div className="stat-info">
+                  <div className="stat-value">{userData?.currentPoints || 0}</div>
+                  <div className="stat-label">Points</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">📈</div>
+                <div className="stat-info">
+                  <div className="stat-value">{userData?.dailyStreak || 0}</div>
+                  <div className="stat-label">Day Streak</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">🍽️</div>
+                <div className="stat-info">
+                  <div className="stat-value">{dailyProgress?.mealsLogged?.length || 0}</div>
+                  <div className="stat-label">Meals Today</div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">🎯</div>
+                <div className="stat-info">
+                  <div className="stat-value">{userData?.targetFbs || 100}</div>
+                  <div className="stat-label">FBS Target</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="metrics-grid">
+              <div className="metric-card">
+                <CircularMeter
+                  value={metrics.calories.current}
+                  max={metrics.calories.max}
+                  label="Calories"
+                  color="#ef4444"
+                  size={120}
+                />
+                <div className="metric-details">
+                  <p>{metrics.calories.current} / {metrics.calories.max} kcal</p>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill calories-fill"
+                      style={{ width: `${Math.min((metrics.calories.current / metrics.calories.max) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="metric-card">
+                <CircularMeter
+                  value={metrics.carbs.current}
+                  max={metrics.carbs.max}
+                  label="Carbs"
+                  color="#f59e0b"
+                  size={120}
+                />
+                <div className="metric-details">
+                  <p>{metrics.carbs.current} / {metrics.carbs.max}g</p>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill carbs-fill"
+                      style={{ width: `${Math.min((metrics.carbs.current / metrics.carbs.max) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="metric-card">
+                <CircularMeter
+                  value={metrics.protein.current}
+                  max={metrics.protein.max}
+                  label="Protein"
+                  color="#10b981"
+                  size={120}
+                />
+                <div className="metric-details">
+                  <p>{metrics.protein.current} / {metrics.protein.max}g</p>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill protein-fill"
+                      style={{ width: `${Math.min((metrics.protein.current / metrics.protein.max) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="metric-card">
+                <CircularMeter
+                  value={metrics.fat.current}
+                  max={metrics.fat.max}
+                  label="Fat"
+                  color="#8b5cf6"
+                  size={120}
+                />
+                <div className="metric-details">
+                  <p>{metrics.fat.current} / {metrics.fat.max}g</p>
+                  <div className="progress-bar">
+                    <div 
+                      className="progress-fill fat-fill"
+                      style={{ width: `${Math.min((metrics.fat.current / metrics.fat.max) * 100, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="quick-actions">
+              <button 
+                className="quick-action-btn primary"
+                onClick={() => setActiveTab('food')}
+              >
+                🍽️ Log Food
+              </button>
+              <button 
+                className="quick-action-btn secondary"
+                onClick={() => setActiveTab('bloodSugar')}
+              >
+                🩸 Log Blood Sugar
+              </button>
+              <button 
+                className="quick-action-btn tertiary"
+                onClick={() => setActiveTab('progress')}
+              >
+                📊 View Progress
+              </button>
+            </div>
+
+            {/* Today's Summary */}
+            {dailyProgress && dailyProgress.mealsLogged && dailyProgress.mealsLogged.length > 0 && (
+              <div className="today-summary">
+                <h3>Today's Meals</h3>
+                <div className="meals-preview">
+                  {dailyProgress.mealsLogged.slice(0, 3).map((meal, index) => (
+                    <div key={index} className="meal-preview-item">
+                      <div className="meal-preview-info">
+                        <span className="meal-name">{meal.foodName}</span>
+                        <span className="meal-type">{meal.mealType}</span>
+                      </div>
+                      <div className="meal-preview-stats">
+                        <span>{Math.round(meal.calories)} cal</span>
+                      </div>
+                    </div>
+                  ))}
+                  {dailyProgress.mealsLogged.length > 3 && (
+                    <div className="more-meals">
+                      +{dailyProgress.mealsLogged.length - 3} more meals
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          <p style={{ color: "#6b7280" }}>Loading your dashboard...</p>
+        );
+
+      case "food":
+        return (
+          <div className="food-tab-content">
+            <FoodLogger onFoodLogged={handleFoodLogged} />
+          </div>
+        );
+
+      case "bloodSugar":
+        return (
+          <div className="blood-sugar-tab-content">
+            <BloodSugarLogger />
+          </div>
+        );
+
+      case "progress":
+        return (
+          <div className="progress-content">
+            <h3>📊 Detailed Progress</h3>
+            {dailyProgress && (
+              <div className="progress-details">
+                <div className="daily-summary">
+                  <h4>Today's Summary</h4>
+                  <div className="summary-grid">
+                    <div className="summary-item">
+                      <span className="summary-label">Meals Logged</span>
+                      <span className="summary-value">{dailyProgress.mealsLogged?.length || 0}</span>
+                    </div>
+                    <div className="summary-item">
+                      <span className="summary-label">Current Streak</span>
+                      <span className="summary-value">{userData?.dailyStreak || 0} days</span>
+                    </div>
+                    <div className="summary-item">
+                      <span className="summary-label">Points Today</span>
+                      <span className="summary-value">{userData?.currentPoints || 0}</span>
+                    </div>
+                    <div className="summary-item">
+                      <span className="summary-label">Calories Remaining</span>
+                      <span className="summary-value">{Math.max(0, metrics.calories.max - metrics.calories.current)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {dailyProgress.mealsLogged && dailyProgress.mealsLogged.length > 0 && (
+                  <div className="meals-list">
+                    <h4>Today's Meals</h4>
+                    {dailyProgress.mealsLogged.map((meal, index) => (
+                      <div key={index} className="meal-item">
+                        <div className="meal-info">
+                          <span className="meal-name">{meal.foodName}</span>
+                          <span className="meal-type">{meal.mealType}</span>
+                          <span className="meal-time">{new Date(meal.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div className="meal-nutrition">
+                          <span>{Math.round(meal.calories)} cal</span>
+                          <span>{Math.round(meal.carbs)}g carbs</span>
+                          <span>{Math.round(meal.protein)}g protein</span>
+                          <span>{Math.round(meal.fat)}g fat</span>
+                        </div>
+                        <div className="meal-points">
+                          +{meal.pointsEarned} pts
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Progressive Targets Info */}
+                {dailyProgress.progressInfo && (
+                  <div className="targets-info">
+                    <h4>🎯 Your Progressive Targets</h4>
+                    <div className="targets-grid">
+                      <div className="target-item">
+                        <span className="target-label">Current FBS Target</span>
+                        <span className="target-value">{dailyProgress.progressInfo.currentTargetFbs} mg/dL</span>
+                      </div>
+                      <div className="target-item">
+                        <span className="target-label">Current PPBS Target</span>
+                        <span className="target-value">{dailyProgress.progressInfo.currentTargetPpbs} mg/dL</span>
+                      </div>
+                      <div className="target-item">
+                        <span className="target-label">Initial FBS</span>
+                        <span className="target-value">{dailyProgress.progressInfo.initialFbs} mg/dL</span>
+                      </div>
+                      <div className="target-item">
+                        <span className="target-label">Initial PPBS</span>
+                        <span className="target-value">{dailyProgress.progressInfo.initialPpbs} mg/dL</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {(!dailyProgress || !dailyProgress.mealsLogged || dailyProgress.mealsLogged.length === 0) && (
+              <div className="no-progress">
+                <h4>No meals logged today</h4>
+                <p>Start by logging your first meal to see your progress!</p>
+                <button 
+                  className="start-logging-btn"
+                  onClick={() => setActiveTab('food')}
+                >
+                  🍽️ Log Your First Meal
+                </button>
+              </div>
+            )}
+          </div>
+        );
+
+      case "leaderboard":
+        return (
+          <div className="leaderboard-tab-content">
+            <Leaderboard />
+          </div>
+        );
+
+      default:
+        return (
+          <div className="overview-content">
+            <p>Select a tab to view content</p>
+          </div>
+        );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
-  // Don't render dashboard if user is not authenticated
-  if (!currentUser) {
-    return null; // Will redirect to login in useEffect
+  if (!userData) {
+    return (
+      <div className="dashboard-error">
+        <h2>Unable to load dashboard</h2>
+        <p>Please try refreshing the page</p>
+        <button onClick={() => window.location.reload()}>Refresh</button>
+      </div>
+    );
   }
 
   return (
-    <div
-      style={{
-        padding: "2rem",
-        maxWidth: "1200px",
-        margin: "0 auto",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-      }}>
-      {/* Your existing JSX content remains the same */}
+    <div className="dashboard">
       {/* Header */}
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-          paddingBottom: "1rem",
-          borderBottom: "1px solid #e5e7eb",
-        }}>
-        <div>
-          <h1 style={{ margin: 0, color: "#111827" }}>Nutrition Dashboard</h1>
-          <p style={{ margin: "0.5rem 0 0 0", color: "#6b7280" }}>
-            Hello, {currentUser?.displayName || currentUser?.email}!
-          </p>
+      <div className="dashboard-header">
+        <div className="header-left">
+          <h1>Welcome back, {userData.fullName || currentUser.displayName || 'User'}! 👋</h1>
+          <p>Track your meals and manage your diabetes journey</p>
         </div>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button
-            onClick={handleProfileClick}
-            style={{
-              background: "#4f46e5",
-              color: "white",
-              border: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-            }}>
-            Profile
+        <div className="header-actions">
+          <button onClick={handleProfileClick} className="profile-btn">
+            👤 Profile
           </button>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: "#ef4444",
-              color: "white",
-              border: "none",
-              padding: "0.5rem 1rem",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "0.875rem",
-              fontWeight: "500",
-            }}>
-            Logout
+          <button onClick={handleLogout} className="logout-btn">
+            🚪 Logout
           </button>
-        </div>
-      </header>
-
-      {/* Leaderboard Section */}
-      <div
-        style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          padding: "2rem",
-          borderRadius: "8px",
-          textAlign: "center",
-          cursor: "pointer",
-          transition: "all 0.3s ease",
-          color: "white",
-          marginBottom: "1rem",
-        }}
-        onClick={() => navigate("/leaderboard")}
-        onMouseEnter={(e) => {
-          e.target.style.transform = "translateY(-3px)";
-          e.target.style.boxShadow = "0 8px 15px rgba(102, 126, 234, 0.4)";
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = "translateY(0)";
-          e.target.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
-        }}>
-        <div style={{ marginBottom: "1rem" }}>
-          <span style={{ fontSize: "4rem", marginBottom: "0.5rem" }}>🏆</span>
-        </div>
-        <h2
-          style={{
-            color: "white",
-            marginBottom: "1rem",
-            margin: 0,
-            fontSize: "2rem",
-          }}>
-          Leaderboard
-        </h2>
-        <p
-          style={{
-            color: "rgba(255,255,255,0.9)",
-            marginBottom: "1.5rem",
-            fontSize: "16px",
-          }}>
-          Compete with others and climb the ranks!
-        </p>
-      </div>
-
-      {/* Nutrition Metrics Dashboard */}
-      <div
-        style={{
-          display: "flex",
-          gap: "2rem",
-          marginBottom: "2rem",
-          flexWrap: "wrap",
-        }}>
-        {/* Daily Calories */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            padding: "1.5rem",
-            background: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            flex: "3",
-            minWidth: "250px",
-          }}>
-          <h3 style={{ margin: "0 0 1rem 0", color: "#374151" }}>
-            Daily Calories
-          </h3>
-          <CircularMeter
-            value={metrics.calories.current}
-            max={metrics.calories.max}
-            label="kcal"
-            color={metrics.calories.color}
-            size={150}
-          />
-          <p style={{ fontSize: "18px", color: "#666", marginTop: "0.5rem" }}>
-            {metrics.calories.current} / {metrics.calories.max} kcal
-          </p>
-        </div>
-
-        {/* Carbohydrates */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            padding: "1.5rem",
-            background: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            flex: "1",
-            minWidth: "250px",
-          }}>
-          <h3 style={{ margin: "0 0 1rem 0", color: "#374151" }}>
-            Carbohydrates
-          </h3>
-          <CircularMeter
-            value={metrics.carbs.current}
-            max={metrics.carbs.max}
-            label="g"
-            color={metrics.carbs.color}
-            size={150}
-          />
-          <p style={{ fontSize: "18px", color: "#666", marginTop: "0.5rem" }}>
-            {metrics.carbs.current} / {metrics.carbs.max}g
-          </p>
-        </div>
-
-        {/* Protein */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            padding: "1.5rem",
-            background: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            flex: "1",
-            minWidth: "250px",
-          }}>
-          <h3 style={{ margin: "0 0 1rem 0", color: "#374151" }}>Protein</h3>
-          <CircularMeter
-            value={metrics.protein.current}
-            max={metrics.protein.max}
-            label="g"
-            color={metrics.protein.color}
-            size={150}
-          />
-          <p style={{ fontSize: "18px", color: "#666", marginTop: "0.5rem" }}>
-            {metrics.protein.current} / {metrics.protein.max}g
-          </p>
-        </div>
-
-        {/* Fat */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            padding: "1.5rem",
-            background: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            flex: "1",
-            minWidth: "250px",
-          }}>
-          <h3 style={{ margin: "0 0 1rem 0", color: "#374151" }}>Fat</h3>
-          <CircularMeter
-            value={metrics.fat.current}
-            max={metrics.fat.max}
-            label="g"
-            color={metrics.fat.color}
-            size={150}
-          />
-          <p style={{ fontSize: "18px", color: "#666", marginTop: "0.5rem" }}>
-            {metrics.fat.current} / {metrics.fat.max}g
-          </p>
         </div>
       </div>
 
-      <FloatingPlusButton onClick={handleAddMeal} size={60} color="#10b981" />
+      {/* Navigation Tabs */}
+      <div className="dashboard-tabs">
+        <button
+          className={`tab ${activeTab === "overview" ? "active" : ""}`}
+          onClick={() => setActiveTab("overview")}
+        >
+          📊 Overview
+        </button>
+        <button
+          className={`tab ${activeTab === "food" ? "active" : ""}`}
+          onClick={() => setActiveTab("food")}
+        >
+          🍽️ Log Food
+        </button>
+        <button
+          className={`tab ${activeTab === "bloodSugar" ? "active" : ""}`}
+          onClick={() => setActiveTab("bloodSugar")}
+        >
+          🩸 Blood Sugar
+        </button>
+        <button
+          className={`tab ${activeTab === "progress" ? "active" : ""}`}
+          onClick={() => setActiveTab("progress")}
+        >
+          📈 Progress
+        </button>
+        <button
+          className={`tab ${activeTab === "leaderboard" ? "active" : ""}`}
+          onClick={() => setActiveTab("leaderboard")}
+        >
+          🏆 Leaderboard
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="dashboard-content">
+        {renderTabContent()}
+      </div>
     </div>
   );
 };
