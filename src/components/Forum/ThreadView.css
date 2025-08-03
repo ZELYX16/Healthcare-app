@@ -1,0 +1,375 @@
+.thread-view {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 15px;
+}
+
+.thread-view-loading,
+.thread-error {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.thread-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.back-btn {
+  padding: 10px 16px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.thread-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.category-icon {
+  font-size: 1.2rem;
+}
+
+/* Main Thread Post */
+.thread-main-post {
+  background: #f8fafc;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border-left: 4px solid #3b82f6;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.author-avatar {
+  width: 40px;
+  height: 40px;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.post-time {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.post-stats {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.thread-title {
+  margin: 0 0 20px 0;
+  color: #1e293b;
+  font-size: 1.8rem;
+  line-height: 1.3;
+}
+
+.thread-content {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #374151;
+  margin-bottom: 20px;
+}
+
+.thread-content p {
+  margin-bottom: 15px;
+}
+
+.thread-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.tag {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.post-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.like-btn:hover {
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.like-btn.liked {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Replies Section */
+.replies-section {
+  margin-top: 40px;
+}
+
+.replies-section h3 {
+  margin: 0 0 25px 0;
+  color: #1e293b;
+  font-size: 1.4rem;
+  text-align: center;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Reply Form */
+.reply-form {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 30px;
+}
+
+.reply-form .form-group {
+  margin-bottom: 15px;
+}
+
+.reply-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 100px;
+  box-sizing: border-box;
+}
+
+.reply-form small {
+  display: block;
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.reply-submit-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reply-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.reply-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Replies List */
+.replies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reply-item {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.reply-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.reply-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.reply-number {
+  background: #f3f4f6;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.reply-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #374151;
+  margin-bottom: 15px;
+}
+
+.reply-content p {
+  margin-bottom: 12px;
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.no-replies {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px dashed #d1d5db;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .thread-view {
+    padding: 15px;
+    margin: 0 10px;
+  }
+  
+  .thread-view-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .post-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .thread-title {
+    font-size: 1.5rem;
+  }
+  
+  .thread-main-post {
+    padding: 20px;
+  }
+  
+  .reply-item {
+    padding: 15px;
+  }
+  
+  .reply-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .thread-view {
+    padding: 10px;
+    margin: 0 5px;
+  }
+  
+  .thread-main-post {
+    padding: 15px;
+  }
+  
+  .thread-title {
+    font-size: 1.3rem;
+  }
+  
+  .replies-section h3 {
+    font-size: 1.2rem;
+  }
+}

@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getUserDocument, getDailyProgress } from "../utils/userUtils";
 import FoodLogger from "../components/Profile/FoodLogger";
-// import BloodSugarLogger from "../components/BloodSugarLogger/BloodSugarLogger";
+import Forum from "../components/Forum/Forum";
 import Leaderboard from "../components/Profile/LeaderBoard";
 import "./Dashboard.css";
 
@@ -336,12 +336,12 @@ const Dashboard = () => {
           </div>
         );
 
-      case "bloodSugar":
-        return (
-          <div className="blood-sugar-tab-content">
-            <BloodSugarLogger />
-          </div>
-        );
+      case "forum":
+  return (
+    <div className="forum-tab-content">
+      <Forum />
+    </div>
+  );
 
       case "progress":
         return (
@@ -507,11 +507,11 @@ const Dashboard = () => {
           🍽️ Log Food
         </button>
         <button
-          className={`tab ${activeTab === "bloodSugar" ? "active" : ""}`}
-          onClick={() => setActiveTab("bloodSugar")}
-        >
-          🩸 Blood Sugar
-        </button>
+  className={`tab ${activeTab === "forum" ? "active" : ""}`}
+  onClick={() => setActiveTab("forum")}
+>
+  💬 Forum
+</button>
         <button
           className={`tab ${activeTab === "progress" ? "active" : ""}`}
           onClick={() => setActiveTab("progress")}

@@ -19,7 +19,7 @@ export const calculateDailyCalories = (height, weight, age, gender, activityLeve
     severityFactor = 0.85;
   } else if (currentFbs >= 126 || currentPpbs >= 180) {
     severityFactor = 0.9;
-  }
+  } // Fixed: Added missing closing brace
   
   const baseCalories = 25;
   const dailyCalories = Math.round(ibw * baseCalories * activityFactors[activityLevel] * severityFactor);
@@ -297,7 +297,7 @@ const resetDailyValuesIfNeeded = async (uid, user) => {
   return user;
 };
 
-// Updated logFoodEntry function - main fix here
+// Updated logFoodEntry function
 export const logFoodEntry = async (uid, foodData) => {
   if (!uid) return false;
   
@@ -323,7 +323,7 @@ export const logFoodEntry = async (uid, foodData) => {
     
     user = await resetDailyValuesIfNeeded(uid, user);
 
-    // Get today's entries count from the user document (more reliable)
+    // Get today's entries count from the user document
     const mealsLoggedToday = user.mealsLoggedToday || 0;
 
     // Calculate points
@@ -428,8 +428,7 @@ export const getDailyProgress = async (uid, date = null) => {
     const mealsQuery = query(
       foodEntriesRef,
       where('userId', '==', uid),
-      where('dateLogged', '==', targetDate),
-      orderBy('createdAt', 'asc')
+      where('dateLogged', '==', targetDate)
     );
     const mealsSnapshot = await getDocs(mealsQuery);
     
@@ -437,6 +436,9 @@ export const getDailyProgress = async (uid, date = null) => {
     mealsSnapshot.forEach(doc => {
       mealsLogged.push({ id: doc.id, ...doc.data() });
     });
+
+    // Sort by createdAt in JavaScript instead of Firestore to avoid index requirement
+    mealsLogged.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     // Use targets from user document
     const macroTargets = {
@@ -491,9 +493,7 @@ export const getDailyProgress = async (uid, date = null) => {
   }
 };
 
-// Rest of your existing functions (updateProgressiveTargetsFromCurrent, updateUserMacros, etc.)
-// Keep them as they are since they work correctly
-
+// Update progressive targets from current blood sugar readings
 export const updateProgressiveTargetsFromCurrent = async (uid, currentFbs, currentPpbs) => {
   if (!uid) return false;
   
@@ -714,5 +714,287 @@ export const submitMonthlyProgress = async (uid, finalFbs, finalPpbs) => {
   } catch (error) {
     console.error('Error submitting monthly progress:', error);
     return { success: false, error: error.message };
+  }
+};
+
+// FORUM FUNCTIONS
+
+// Create a new forum thread
+export const createForumThread = async (uid, threadData) => {
+  if (!uid) {
+    console.error('No user ID provided');
+    return { success: false, error: 'User not authenticated' };
+  }
+  
+  try {
+    const user = await getUserDocument(uid);
+    if (!user) {
+      console.error('User document not found');
+      throw new Error('User not found');
+    }
+
+    console.log('Creating thread with data:', threadData);
+
+    // Create the thread document
+    const threadRef = doc(collection(db, 'forumThreads'));
+    const newThread = {
+      id: threadRef.id,
+      authorId: uid,
+      authorName: user.fullName || user.displayName || 'Anonymous',
+      title: threadData.title,
+      content: threadData.content,
+      category: threadData.category,
+      tags: threadData.tags || [],
+      replies: 0,
+      views: 0,
+      likes: 0,
+      likedBy: [],
+      isPinned: false,
+      isLocked: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastReplyAt: new Date().toISOString(),
+      lastReplyBy: user.fullName || user.displayName || 'Anonymous'
+    };
+
+    console.log('Writing thread to database:', newThread);
+
+    // Write to Firestore
+    await setDoc(threadRef, newThread);
+
+    console.log('Thread created successfully with ID:', threadRef.id);
+
+    // Award points for creating a thread
+    const pointsEarned = 25;
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, {
+      currentPoints: (user.currentPoints || 0) + pointsEarned,
+      totalPoints: (user.totalPoints || 0) + pointsEarned,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    // Update leaderboard
+    const leaderboardRef = doc(db, 'leaderboard', uid);
+    await setDoc(leaderboardRef, {
+      totalPoints: (user.totalPoints || 0) + pointsEarned,
+      lastUpdated: new Date().toISOString()
+    }, { merge: true });
+
+    console.log('Points awarded and leaderboard updated');
+
+    return {
+      success: true,
+      threadId: threadRef.id,
+      pointsEarned,
+      thread: newThread
+    };
+  } catch (error) {
+    console.error('Error creating forum thread:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Reply to a forum thread
+export const replyToThread = async (uid, threadId, replyContent) => {
+  if (!uid || !threadId) return false;
+  
+  try {
+    const user = await getUserDocument(uid);
+    if (!user) throw new Error('User not found');
+
+    // Create reply
+    const replyRef = doc(collection(db, 'forumReplies'));
+    const newReply = {
+      id: replyRef.id,
+      threadId,
+      authorId: uid,
+      authorName: user.fullName || user.displayName || 'Anonymous',
+      content: replyContent,
+      likes: 0,
+      likedBy: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await setDoc(replyRef, newReply);
+
+    // Update thread reply count and last reply info
+    const threadRef = doc(db, 'forumThreads', threadId);
+    const threadDoc = await getDoc(threadRef);
+    
+    if (threadDoc.exists()) {
+      const currentReplies = threadDoc.data().replies || 0;
+      await setDoc(threadRef, {
+        replies: currentReplies + 1,
+        lastReplyAt: new Date().toISOString(),
+        lastReplyBy: user.fullName || user.displayName || 'Anonymous',
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+
+    // Award points for replying
+    const pointsEarned = 10;
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, {
+      currentPoints: (user.currentPoints || 0) + pointsEarned,
+      totalPoints: (user.totalPoints || 0) + pointsEarned,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    return { success: true, replyId: replyRef.id, pointsEarned };
+  } catch (error) {
+    console.error('Error replying to thread:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Get forum threads with pagination
+export const getForumThreads = async (category = null, limitCount = 20, lastDoc = null) => {
+  try {
+    const threadsRef = collection(db, 'forumThreads');
+    let threadsQuery;
+
+    if (category && category !== 'all') {
+      threadsQuery = query(
+        threadsRef,
+        where('category', '==', category),
+        orderBy('isPinned', 'desc'),
+        orderBy('lastReplyAt', 'desc'),
+        limit(limitCount)
+      );
+    } else {
+      threadsQuery = query(
+        threadsRef,
+        orderBy('isPinned', 'desc'),
+        orderBy('lastReplyAt', 'desc'),
+        limit(limitCount)
+      );
+    }
+
+    const snapshot = await getDocs(threadsQuery);
+    const threads = [];
+    
+    snapshot.forEach(doc => {
+      threads.push({ id: doc.id, ...doc.data() });
+    });
+
+    return threads;
+  } catch (error) {
+    console.error('Error fetching forum threads:', error);
+    return [];
+  }
+};
+
+// Get single thread with replies
+export const getThreadWithReplies = async (threadId) => {
+  if (!threadId) return null;
+  
+  try {
+    // Get thread
+    const threadRef = doc(db, 'forumThreads', threadId);
+    const threadDoc = await getDoc(threadRef);
+    
+    if (!threadDoc.exists()) return null;
+    
+    const thread = { id: threadDoc.id, ...threadDoc.data() };
+
+    // Update view count
+    await setDoc(threadRef, {
+      views: (thread.views || 0) + 1,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    // Get replies
+    const repliesRef = collection(db, 'forumReplies');
+    const repliesQuery = query(
+      repliesRef,
+      where('threadId', '==', threadId),
+      orderBy('createdAt', 'asc')
+    );
+    
+    const repliesSnapshot = await getDocs(repliesQuery);
+    const replies = [];
+    
+    repliesSnapshot.forEach(doc => {
+      replies.push({ id: doc.id, ...doc.data() });
+    });
+
+    return { thread, replies };
+  } catch (error) {
+    console.error('Error fetching thread with replies:', error);
+    return null;
+  }
+};
+
+// Like/Unlike thread or reply
+export const toggleLike = async (uid, itemId, itemType) => {
+  if (!uid || !itemId) return false;
+  
+  try {
+    const user = await getUserDocument(uid);
+    if (!user) throw new Error('User not found');
+
+    const collectionName = itemType === 'thread' ? 'forumThreads' : 'forumReplies';
+    const itemRef = doc(db, collectionName, itemId);
+    const itemDoc = await getDoc(itemRef);
+    
+    if (!itemDoc.exists()) return false;
+
+    const itemData = itemDoc.data();
+    const likedBy = itemData.likedBy || [];
+    const isLiked = likedBy.includes(uid);
+
+    let newLikedBy, newLikes;
+    
+    if (isLiked) {
+      // Unlike
+      newLikedBy = likedBy.filter(id => id !== uid);
+      newLikes = Math.max(0, (itemData.likes || 0) - 1);
+    } else {
+      // Like
+      newLikedBy = [...likedBy, uid];
+      newLikes = (itemData.likes || 0) + 1;
+    }
+
+    await setDoc(itemRef, {
+      likes: newLikes,
+      likedBy: newLikedBy,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+
+    return { success: true, isLiked: !isLiked, likes: newLikes };
+  } catch (error) {
+    console.error('Error toggling like:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Search forum threads
+export const searchForumThreads = async (searchTerm, limitCount = 20) => {
+  if (!searchTerm) return [];
+  
+  try {
+    const threadsRef = collection(db, 'forumThreads');
+    const searchQuery = query(
+      threadsRef,
+      orderBy('title'),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(searchQuery);
+    const threads = [];
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          data.content.toLowerCase().includes(searchTerm.toLowerCase())) {
+        threads.push({ id: doc.id, ...data });
+      }
+    });
+
+    return threads;
+  } catch (error) {
+    console.error('Error searching forum threads:', error);
+    return [];
   }
 };
