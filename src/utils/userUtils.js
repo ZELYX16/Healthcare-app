@@ -173,7 +173,7 @@ export const updateUserProfile = async (uid, profileData) => {
       const calorieData = calculateDailyCalories(height, weight, age, gender, activityLevel, currentFbs, currentPpbs);
       
       // Calculate currentCalories as product of dailyCalories and weight
-      const currentCalories = Math.round(calorieData.dailyCalories * weight);
+      const currentCalories = 0;
       
       // Calculate progressive targets
       const progressiveTargets = calculateProgressiveTargets(
