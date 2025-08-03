@@ -4,7 +4,7 @@ import { logFoodEntry } from '../../utils/userUtils';
 import foodService from '../../services/foodService';
 import './FoodLogger.css';
 
-const FoodLogger = () => {
+const FoodLogger = ({ onFoodLogged }) => {
   const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     foodName: '',
@@ -21,7 +21,6 @@ const FoodLogger = () => {
     const value = e.target.value;
     setFormData({ ...formData, foodName: value });
     
-    // Get food suggestions
     if (value.length >= 2) {
       const foodSuggestions = foodService.getFoodSuggestions(value);
       setSuggestions(foodSuggestions);
@@ -29,7 +28,6 @@ const FoodLogger = () => {
       setSuggestions([]);
     }
 
-    // Clear preview when changing food name
     setPreviewNutrition(null);
   };
 
@@ -67,6 +65,11 @@ const FoodLogger = () => {
         setResult(result);
         setFormData({ foodName: '', quantity: '', mealType: 'breakfast' });
         setPreviewNutrition(null);
+        
+        // Call the callback to refresh dashboard data
+        if (onFoodLogged) {
+          onFoodLogged();
+        }
       } else {
         setError(result.error);
       }
@@ -122,7 +125,6 @@ const FoodLogger = () => {
           />
         </div>
 
-        {/* Nutrition Preview */}
         {previewNutrition && (
           <div className="nutrition-preview">
             <h4>Nutrition Preview:</h4>
@@ -179,7 +181,6 @@ const FoodLogger = () => {
         </div>
       )}
 
-      {/* Diabetic-Friendly Suggestions */}
       <div className="diabetic-suggestions">
         <h3>💡 Diabetic-Friendly Foods</h3>
         <div className="suggestions-grid">

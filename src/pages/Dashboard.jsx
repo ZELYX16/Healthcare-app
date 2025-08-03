@@ -83,19 +83,19 @@ const Dashboard = () => {
           if (progress) {
             setMetrics({
               calories: { 
-                current: Math.round(progress.consumed.consumedCalories || 0), 
+                current: Math.round(progress.consumed.consumedCalories || userDoc?.currentCalories || 0), 
                 max: Math.round(progress.targets.targetCalories || userDoc?.dailyCalories || 1800) 
               },
               carbs: { 
-                current: Math.round(progress.consumed.consumedCarbs || 0), 
+                current: Math.round(progress.consumed.consumedCarbs || userDoc?.consumedCarbs || 0), 
                 max: Math.round(progress.targets.targetCarbs || userDoc?.targetCarbs || 200) 
               },
               protein: { 
-                current: Math.round(progress.consumed.consumedProtein || 0), 
+                current: Math.round(progress.consumed.consumedProtein || userDoc?.consumedProtein || 0), 
                 max: Math.round(progress.targets.targetProtein || userDoc?.targetProtein || 150) 
               },
               fat: { 
-                current: Math.round(progress.consumed.consumedFat || 0), 
+                current: Math.round(progress.consumed.consumedFat || userDoc?.consumedFat || 0), 
                 max: Math.round(progress.targets.targetFat || userDoc?.targetFat || 60) 
               },
             });
