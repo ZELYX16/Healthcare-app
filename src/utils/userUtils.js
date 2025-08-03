@@ -1,5 +1,7 @@
 import { doc, setDoc, getDoc, collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import foodService from '../services/foodService.js';
+
 
 // Calculate daily calories using diabetic diet formula
 export const calculateDailyCalories = (height, weight, age, gender, activityLevel = 'moderate', currentFbs = 100, currentPpbs = 140) => {
@@ -421,12 +423,26 @@ export const logBloodSugarReading = async (uid, newFbs, newPpbs) => {
 };
 
 // Log food entry with points and streak calculation
+// Update your logFoodEntry function
 export const logFoodEntry = async (uid, foodData) => {
   if (!uid) return false;
   
   try {
     const today = new Date().toISOString().split('T')[0];
     
+    // Get nutrition data from food database
+    const nutritionData = foodService.calculateNutrition(
+      foodData.foodName, 
+      foodData.quantity
+    );
+    
+    if (!nutritionData) {
+      return { 
+        success: false, 
+        error: 'Food not found in database. Please check the spelling or try a different name.' 
+      };
+    }
+
     // Get user data
     const user = await getUserDocument(uid);
     if (!user) throw new Error('User not found');
@@ -434,7 +450,7 @@ export const logFoodEntry = async (uid, foodData) => {
     // Get today's entries count
     const foodEntriesRef = collection(db, 'foodEntries');
     const todaysEntriesQuery = query(
-      foodEntriesRef, 
+      foodEntriesRef,
       where('userId', '==', uid),
       where('dateLogged', '==', today)
     );
@@ -447,25 +463,26 @@ export const logFoodEntry = async (uid, foodData) => {
     const firstMealBonus = mealsLoggedToday === 0 ? 5 : 0;
     const pointsEarned = basePoints + firstMealBonus;
 
-    // Create food entry
+    // Create food entry with calculated nutrition
     const foodEntryRef = doc(collection(db, 'foodEntries'));
     await setDoc(foodEntryRef, {
       userId: uid,
-      ...foodData,
+      ...nutritionData, // Use calculated nutrition instead of user input
+      mealType: foodData.mealType,
       pointsEarned,
       dateLogged: today,
       createdAt: new Date().toISOString()
     });
 
-    // Update daily macros
+    // Update daily macros with calculated nutrition
     await updateDailyMacros(uid, {
-      calories: foodData.calories || 0,
-      carbs: foodData.carbs || 0,
-      protein: foodData.protein || 0,
-      fat: foodData.fat || 0
+      calories: nutritionData.calories,
+      carbs: nutritionData.carbs,
+      protein: nutritionData.protein,
+      fat: nutritionData.fat
     });
 
-    // Calculate new streak
+    // Rest of your existing logic...
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     const newMealsCount = mealsLoggedToday + 1;
     
@@ -478,7 +495,6 @@ export const logFoodEntry = async (uid, foodData) => {
       }
     }
 
-    // Update user stats
     const newTotalPoints = (user.totalPoints || 0) + pointsEarned;
     const newCurrentPoints = (user.currentPoints || 0) + pointsEarned;
     const newLongestStreak = Math.max(user.longestStreak || 0, newStreak);
@@ -494,7 +510,6 @@ export const logFoodEntry = async (uid, foodData) => {
       updatedAt: new Date().toISOString()
     }, { merge: true });
 
-    // Update leaderboard
     const leaderboardRef = doc(db, 'leaderboard', uid);
     await setDoc(leaderboardRef, {
       totalPoints: newTotalPoints,
@@ -509,13 +524,15 @@ export const logFoodEntry = async (uid, foodData) => {
       newTotalPoints,
       currentStreak: newStreak,
       longestStreak: newLongestStreak,
-      mealsLoggedToday: newMealsCount
+      mealsLoggedToday: newMealsCount,
+      nutritionData // Return calculated nutrition for frontend display
     };
   } catch (error) {
     console.error('Error logging food entry:', error);
     return { success: false, error: error.message };
   }
 };
+
 
 // Get daily food progress
 export const getDailyProgress = async (uid, date = null) => {
