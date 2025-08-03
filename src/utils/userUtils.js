@@ -100,7 +100,7 @@ export const createUserDocument = async (user, additionalData = {}) => {
         weight: null,
         age: null,
         gender: null,
-        activityLevel: 'moderate',
+        activityLevel: "moderate",
         currentFbs: 100,
         currentPpbs: 140,
         targetFbs: 100,
@@ -115,6 +115,10 @@ export const createUserDocument = async (user, additionalData = {}) => {
         proteinPercent: 20,
         fatPercent: 30,
         targetSetDate: null,
+        consumedCalories: 0,
+        consumedCarbs: 0,
+        consumedProtiens: 0,
+        consumedFats: 0,
         ...additionalData,
       });
 
