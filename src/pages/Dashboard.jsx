@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getUserDocument, getDailyProgress } from "../utils/userUtils";
 import FoodLogger from "../components/Profile/FoodLogger";
 // import BloodSugarLogger from "../components/BloodSugarLogger/BloodSugarLogger";
-// import Leaderboard from "../components/Leaderboard/Leaderboard";
+import Leaderboard from "../components/Profile/LeaderBoard";
 import "./Dashboard.css";
 
 // Circular Meter Component
