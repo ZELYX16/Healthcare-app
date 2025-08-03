@@ -83,7 +83,7 @@ const FoodLogger = ({ onFoodLogged }) => {
 
   return (
     <div className="food-logger">
-      <h2>Log Your Meal</h2>
+      <h2 style={{color:"black"}}>Log Your Meal</h2>
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">

@@ -8,6 +8,7 @@
 
 .form-group {
   margin-bottom: 15px;
+  color:black;
   position: relative;
 }
 
@@ -33,6 +34,7 @@
   left: 0;
   right: 0;
   background: white;
+  color:black;
   border: 1px solid #ddd;
   border-top: none;
   border-radius: 0 0 5px 5px;
@@ -53,6 +55,7 @@
 
 .nutrition-preview {
   background: #e8f4fd;
+  color:black;
   padding: 15px;
   border-radius: 5px;
   margin: 15px 0;
@@ -76,6 +79,7 @@
 
 .success-message {
   background: #d4edda;
+  color:black;
   border: 1px solid #c3e6cb;
   padding: 15px;
   border-radius: 5px;
@@ -112,7 +116,7 @@
 }
 
 .suggestion-card {
-  background: rgb(36, 42, 66);
+  background: #ffffff;
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #ddd;
